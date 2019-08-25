@@ -1,34 +1,48 @@
 import sqlite3
-from contextlib import closing
 import xml.etree.ElementTree as ET
+
+
+def create_tables(dbname):
+    with sqlite3.connect(dbname) as conn:
+        c = conn.cursor()
+        create_group_table = "CREATE TABLE IF NOT EXISTS bank_group (id INTEGER PRIMARY KEY, name VARCHAR(64))"
+        create_bank_table = "CREATE TABLE IF NOT EXISTS bank (id INTEGER PRYMARY KEY, name VARCHAR(64), lsb INTEGER, msb INTEGER, pc INTEGER, group_num INTEGER)"
+        c.execute(create_group_table)
+        c.execute(create_bank_table)
+
 
 filename = "banks.xml"
 
 data = open(filename).read()
 data = data.encode('utf-8')
 data = data.decode()
-
 roots = ET.fromstring(data)
 
-tree = {"banks": []}
+dbname = "soniccell.db"
+create_tables(dbname)
 
 group_num = 1
 tone_num = 1
 
-for root in roots:
-    # print(root.tag)
-    for group in root:
-        if (group.get("Name") == "USER PATCH"):
-            continue
-        group_num += 1
-        # print(group.get("Name"))
-        for tone in group:
-            # print(tone.get("Name"))
-            tone_num += 1
-
-# dbname = "banks"
-
-# with closing(sqlite3.connect(dbname)) as conn:
-#     c = conn.cursor()
-#     create_table = "create table if not exists bank (id int, name varchar(64), lsb int, msb int, pc int)"
-#     c.execute(create_table)
+with sqlite3.connect(dbname) as conn:
+    c = conn.cursor()
+    for root in roots:
+        for group in root:
+            gname = group_name = group.get("Name")
+            if (gname == "USER PATCH"):
+                continue
+            c.execute(
+                f'insert into bank_group (id, name) values("{group_num}", "{gname}")'
+            )
+            group_num += 1
+            for pc in group:
+                p = pc.get("PC")
+                for tone in pc:
+                    name = tone.get("Name")
+                    lsb = tone.get("LSB")
+                    msb = tone.get("MSB")
+                    print(name, lsb, msb, p)
+                    c.execute(
+                        f'insert into bank (id, name, lsb, msb, pc, group_num) values("{tone_num}", "{name}", "{lsb}", "{msb}", "{p}", "{group_num}")'
+                    )
+                    tone_num += 1
