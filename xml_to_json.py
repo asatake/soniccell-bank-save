@@ -34,7 +34,6 @@ with sqlite3.connect(dbname) as conn:
             c.execute(
                 f'insert into bank_group (id, name) values("{group_num}", "{gname}")'
             )
-            group_num += 1
             for pc in group:
                 p = pc.get("PC")
                 for tone in pc:
@@ -46,3 +45,4 @@ with sqlite3.connect(dbname) as conn:
                         f'insert into bank (id, name, lsb, msb, pc, group_num) values("{tone_num}", "{name}", "{lsb}", "{msb}", "{p}", "{group_num}")'
                     )
                     tone_num += 1
+            group_num += 1
